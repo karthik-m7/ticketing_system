@@ -1,17 +1,4 @@
-<!--{% load static %}-->
-<!--&lt;!&ndash;ticket details page &ndash;&gt;-->
-<!--<!DOCTYPE html>-->
-<!--<html lang="en">-->
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <title>Title</title>-->
-<!--</head>-->
-<!--<body>-->
-<!--&lt;!&ndash;left side 4 colum use basic details of the page  like tikcket name, description , if image show image , status, user name , email, phone nuber &ndash;&gt;-->
-<!--&lt;!&ndash;&ndash;&gt;-->
-<!--&lt;!&ndash;right side 8 column use chat conversation page about the ticket left side staff chat and right side user chat like whatsapp &ndash;&gt;-->
-<!--</body>-->
-<!--</html>-->
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -125,6 +112,12 @@
         .send-button:hover {
             background: #1ebf5c;
         }
+        #status-text {
+            font-size: 14px;
+            padding: 6px 12px;
+            border-radius: 12px;
+        }
+
 
 
 
@@ -141,7 +134,39 @@
         {% if ticket.image %}
             <img src="{{ ticket.image.url }}" alt="Ticket Image" style="max-width:250px;" class="ticket-image">
         {% endif %}
-        <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+        <!-- Ticket Status Block -->
+        <div class="p-3 border rounded bg-light mb-3" style="max-width: 350px;">
+
+            <p class="mb-2">
+                <strong> 🎫 Ticket Status:</strong>
+                <span id="status-text" class="badge
+                    {% if ticket.status == 'OPEN' %}bg-secondary
+                    {% elif ticket.status == 'IN_PROGRESS' %}bg-info
+                    {% elif ticket.status == 'RESOLVED' %}bg-success
+                    {% elif ticket.status == 'CLOSED' %}bg-dark
+                    {% endif %}
+                ">
+                    {{ ticket.get_status_display }}
+                </span>
+            </p>
+
+            {% if is_staff %}
+            <div>
+                <label for="status-select" class="form-label"><strong>Change Status:</strong></label>
+                <div class="input-group">
+                    <select id="status-select" class="form-select">
+                        <option value="OPEN" {% if ticket.status == "OPEN" %}selected{% endif %}>Open</option>
+                        <option value="IN_PROGRESS" {% if ticket.status == "IN_PROGRESS" %}selected{% endif %}>In Progress</option>
+                        <option value="RESOLVED" {% if ticket.status == "RESOLVED" %}selected{% endif %}>Resolved</option>
+                        <option value="CLOSED" {% if ticket.status == "CLOSED" %}selected{% endif %}>Closed</option>
+                    </select>
+                    <button id="update-status-btn" class="btn btn-primary">Update</button>
+                </div>
+                <div id="status-alert" class="text-success mt-2" style="display:none;">✅ Status updated!</div>
+            </div>
+            {% endif %}
+        </div>
+
         <hr>
         <h3>User Info</h3>
         <p><strong>Name:</strong> {{ ticket.user.name }}</p>
@@ -157,6 +182,7 @@
         {% else %}
         <p><em>No staff assigned yet.</em></p>
         {% endif %}
+
     </div>
 
     <!-- Right Column: Chat Conversation -->
@@ -202,6 +228,30 @@
 
 
 </div>
+<script>
+document.getElementById("update-status-btn")?.addEventListener("click", function () {
+    const status = document.getElementById("status-select").value;
+
+    fetch("{% url 'update_ticket_status' ticket.id %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({ status: status })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById("status-text").innerText = data.status_display;
+            const alertBox = document.getElementById("status-alert");
+            alertBox.style.display = "block";
+            setTimeout(() => alertBox.style.display = "none", 2000);
+        }
+    });
+});
+</script>
+
 <script>
     const chatBox = document.getElementById("chat-box");
     chatBox.scrollTop = chatBox.scrollHeight;

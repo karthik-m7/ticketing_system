@@ -1,6 +1,8 @@
 from django.shortcuts import render, get_object_or_404
 from django.contrib import messages
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+
 from .models import User, Ticket, Staff
 
 
@@ -75,7 +77,8 @@ def ticket_details(request, id):
     context = {
         'ticket': ticket,
         'current_user_name': ticket.staff.name if staff_id else ticket.user.name,
-        'current_user_type': 'staff' if staff_id else 'user'
+        'current_user_type': 'staff' if staff_id else 'user',
+        'is_staff': bool(staff_id),
     }
     return render(request, 'ticket_details.html', context)
 
@@ -156,6 +159,29 @@ def staff_create(request):
     return render(request, 'staff_create.html')
 
 
+from django.http import JsonResponse
+import json
+
+
+
+
+
+@csrf_exempt
+def update_ticket_status(request, ticket_id):
+    if request.method == 'POST' and request.session.get('staff_id'):
+        ticket = get_object_or_404(Ticket, id=ticket_id)
+        data = json.loads(request.body)
+        new_status = data.get('status')
+
+        if new_status in dict(Ticket.STATUS_CHOICES).keys():
+            ticket.status = new_status
+            ticket.save()
+            return JsonResponse({
+                "success": True,
+                "status_display": ticket.get_status_display()
+            })
+
+    return JsonResponse({"success": False}, status=400)
 
 
 

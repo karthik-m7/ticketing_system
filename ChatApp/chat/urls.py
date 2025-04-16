@@ -13,6 +13,8 @@ urlpatterns = [
     path('staff/dashboard/', views.staff_dashboard, name='staff_dashboard'),
     path('assign_ticket/<int:ticket_id>/', views.assign_ticket, name='assign_ticket'),
     path('staff/create/', views.staff_create, name='staff_create'),
+    path('ticket/<int:ticket_id>/update-status/', views.update_ticket_status, name='update_ticket_status'),
+
 ]
 
 
