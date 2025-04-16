@@ -1,0 +1,70 @@
+# Default ignored files
+/shelf/
+/workspace.xml
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Django stuff:
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+*.sqlite
+
+# Ignore Django migrations
+*/migrations/
+!*/migrations/__init__.py
+
+# Media / Uploaded files
+media/
+uploads/
+
+# Static files (can be rebuilt)
+staticfiles/
+static/
+
+# Secret files and environment configs
+.env
+.env.*
+*.env
+
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Mac/Linux/Windows system files
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# pip log
+pip-log.txt
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+.nox/
+.cache/
+pytest_cache/
+
+# MySQL dump
+*.sql
+
+# Ignore local settings (if you separate settings for production/dev)
+local_settings.py
+
