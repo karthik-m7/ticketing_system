@@ -1,0 +1,167 @@
+<!--{% load static %}-->
+<!--&lt;!&ndash;ticket details page &ndash;&gt;-->
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <title>Title</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--&lt;!&ndash;left side 4 colum use basic details of the page  like tikcket name, description , if image show image , status, user name , email, phone nuber &ndash;&gt;-->
+<!--&lt;!&ndash;&ndash;&gt;-->
+<!--&lt;!&ndash;right side 8 column use chat conversation page about the ticket left side staff chat and right side user chat like whatsapp &ndash;&gt;-->
+<!--</body>-->
+<!--</html>-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ticket Details - {{ ticket.title }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .left-col {
+            width: 30%;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .right-col {
+            width: 70%;
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #fff;
+            height: 600px;
+            overflow-y: scroll;
+        }
+    .chat-bubble {
+        max-width: 70%;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 10px;
+        clear: both;
+    }
+
+    .staff {
+        background-color: #d1e7dd;
+        float: left;
+        text-align: left;
+    }
+
+    .user {
+        background-color: #bee3f8;
+        float: right;
+        text-align: right;
+    }
+
+        img.ticket-image, img.message-image {
+            max-width: 100%;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Left Column: Ticket Details -->
+    <div class="left-col">
+        <h2>Ticket Info</h2>
+        <p><strong>Title:</strong> {{ ticket.title }}</p>
+        <p><strong>Description:</strong> {{ ticket.description }}</p>
+        {% if ticket.image %}
+            <img src="{{ ticket.image.url }}" alt="Ticket Image" style="max-width:250px;" class="ticket-image">
+        {% endif %}
+        <p><strong>Status:</strong> {{ ticket.get_status_display }}</p>
+        <hr>
+        <h3>User Info</h3>
+        <p><strong>Name:</strong> {{ ticket.user.name }}</p>
+        <p><strong>Email:</strong> {{ ticket.user.email }}</p>
+        <p><strong>Phone:</strong> {{ ticket.user.number }}</p>
+        <hr>
+        {% if ticket.staff %}
+        <h3>Assigned Staff</h3>
+        <p><strong>Name:</strong> {{ ticket.staff.name }}</p>
+        <p><strong>Email:</strong> {{ ticket.staff.email }}</p>
+        <p><strong>Phone:</strong> {{ ticket.staff.number }}</p>
+        <p><strong>Designation:</strong> {{ ticket.staff.designation }}</p>
+        {% else %}
+        <p><em>No staff assigned yet.</em></p>
+        {% endif %}
+    </div>
+
+    <!-- Right Column: Chat Conversation -->
+<div class="right-col">
+    <h2>Conversation</h2>
+
+    <!-- Chat messages -->
+    <div id="chat-box">
+        {% for message in ticket.messages.all %}
+            <div class="chat-bubble {% if message.sender_type == current_user_type %}user{% else %}staff{% endif %}">
+                <p><strong>{{ message.sender_name }}:</strong></p>
+                <p>{{ message.message }}</p>
+                {% if message.image %}
+                    <img src="{{ message.image.url }}" alt="Message Image" class="message-image">
+                {% endif %}
+                <small style="display: block; margin-top: 5px;">{{ message.datetime|date:"M d, Y H:i" }}</small>
+            </div>
+        {% empty %}
+            <p>No messages yet.</p>
+        {% endfor %}
+    </div>
+
+
+    <!-- Chat input -->
+    <form method="POST" enctype="multipart/form-data" style="margin-top: 20px;">
+        {% csrf_token %}
+       <input type="hidden" name="sender_name" value="{{ current_user_name }}"><!-- Set dynamically from context -->
+        <textarea name="message" rows="2" placeholder="Type your message..." required style="width: 100%; padding: 10px; border-radius: 6px;"></textarea>
+        <input type="file" name="image" accept="image/*" style="margin-top: 10px;">
+        <button type="submit" style="margin-top: 10px; padding: 10px 20px; background-color: green; color: white; border: none; border-radius: 5px;">Send</button>
+    </form>
+</div>
+
+</div>
+
+<script>
+    const ticketId = "{{ ticket.id }}";
+    const userName = "{{ current_user_name }}";
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/ticket/' + ticketId + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const messageBox = document.getElementById('chat-box');
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble ' + (data.sender_name === userName ? 'user' : 'staff');
+        bubble.innerHTML = `<p><strong>${data.sender_name}:</strong></p><p>${data.message}</p>`;
+        if (data.image_url) {
+            bubble.innerHTML += `<img src="${data.image_url}" class="message-image">`;
+        }
+        messageBox.appendChild(bubble);
+        messageBox.scrollTop = messageBox.scrollHeight;
+    };
+
+    function sendMessage() {
+        const messageInput = document.getElementById('message-input');
+        const message = messageInput.value;
+        chatSocket.send(JSON.stringify({
+            'message': message,
+            'sender_name': userName
+        }));
+        messageInput.value = '';
+    }
+</script>
+
+
+</body>
+</html>

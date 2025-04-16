@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f4f6f9;
+        }
+        .card-stats {
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: 0.3s ease;
+        }
+        .card-stats:hover {
+            transform: scale(1.02);
+        }
+        .table thead {
+            background-color: #007bff;
+            color: #fff;
+        }
+        .btn-view {
+            background-color: #17a2b8;
+        }
+        .btn-assign {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Welcome, {{ staff.name }}</h2>
+        <a href="{% url 'staff_login' %}" class="btn btn-danger">Logout</a>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card card-stats p-3 text-center">
+                <h5>Total Tickets</h5>
+                <h2>{{ tickets.count }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stats p-3 text-center">
+                <h5>Resolved Tickets</h5>
+                <h2>{{ resolved_count }}</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stats p-3 text-center">
+                <h5>Assigned to You</h5>
+                <h2>{{ assigned_to_me }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Table -->
+    <div class="card p-4 shadow-sm">
+        <h4 class="mb-3">All Tickets</h4>
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Title</th>
+                    <th>Created Date</th>
+                    <th>Status</th>
+                    <th>Assigned</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.id}} </td>
+                        <td>{{ ticket.user.name }}</td>
+                        <td>{{ ticket.title }}</td>
+                        <td> {{ ticket.created_at }}</td>
+                        <td>{{ ticket.get_status_display }}</td>
+                        <td>
+                            {% if ticket.staff %}
+                                {{ ticket.staff.name }}
+                            {% else %}
+                                <span class="text-muted">Unassigned</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if not ticket.staff %}
+                                <form method="POST" action="{% url 'assign_ticket' ticket.id %}">
+                                    {% csrf_token %}
+                                    <button class="btn btn-sm btn-assign text-white">Assign to Me</button>
+                                </form>
+                            {% elif ticket.staff.id == staff.id %}
+                                <a href="{% url 'ticket_details' ticket.id %}" class="btn btn-sm btn-view text-white">View</a>
+                            {% else %}
+                                <span class="text-muted">Already Assigned</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="6" class="text-center">No tickets available.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

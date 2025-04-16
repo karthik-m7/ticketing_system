@@ -1,0 +1,62 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Create Ticket</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'assets/web/css/index.css' %}">
+
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <div class="nav_top">
+        Support Ticket System
+    </div>
+
+    {% if messages %}
+    <div>
+        {% for message in messages %}
+             <p style="color: green; font-weight: bold; text-align:center;">
+                <a href="{% url 'ticket_details' ticket.id %}" style="color: green; text-decoration: underline;">
+                    {{ message }} : Click To Open Your Ticket
+                </a>
+            </p>
+
+        {% endfor %}
+    </div>
+    {% endif %}
+    <!-- Ticket Creation Form -->
+    <div class="start_ticket">
+        <form method="POST" enctype="multipart/form-data" class="create_ticket">
+            {% csrf_token %}
+
+            <div class="form_heading">Create Ticket</div>
+
+            <label for="name">Your Name</label>
+            <input type="text" name="name" id="name" required>
+
+            <label for="email">Your Email</label>
+            <input type="text" name="email" id="email" required>
+
+            <label for="number">Your Number</label>
+            <input type="text" name="number" id="number" required>
+
+            <label for="title">Your Title</label>
+            <input type="text" name="title" id="title" required>
+
+            <label for="description">Your Description</label>
+            <input type="text" name="description" id="description" required>
+
+            <label for="image">Upload Image or Screenshot</label>
+            <input type="file" name="image" id="image">
+
+            <button type="submit" class="submit_button">Submit Ticket</button>
+        </form>
+    </div>
+
+</body>
+</html>
