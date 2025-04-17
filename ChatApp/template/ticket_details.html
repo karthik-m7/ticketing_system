@@ -260,33 +260,70 @@ document.getElementById("update-status-btn")?.addEventListener("click", function
 <script>
     const ticketId = "{{ ticket.id }}";
     const userName = "{{ current_user_name }}";
+    const senderType = "{{ current_user_type }}";  // Make sure this is passed from view context
+
+    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const chatSocket = new WebSocket(
-        'ws://' + window.location.host + '/ws/ticket/' + ticketId + '/'
+        `${protocol}://${window.location.host}/ws/ticket/${ticketId}/`
     );
 
-    chatSocket.onmessage = function(e) {
+    console.log("🟢 WebSocket connecting to:", chatSocket.url);
+
+    chatSocket.onopen = function () {
+        console.log("✅ WebSocket connection established");
+    };
+
+    chatSocket.onerror = function (e) {
+        console.error("❌ WebSocket error", e);
+    };
+
+    chatSocket.onclose = function () {
+        console.warn("🔌 WebSocket connection closed");
+    };
+
+    chatSocket.onmessage = function (e) {
+        console.log("📨 Message received:", e.data);
         const data = JSON.parse(e.data);
-        const messageBox = document.getElementById('chat-box');
-        const bubble = document.createElement('div');
-        bubble.className = 'chat-bubble ' + (data.sender_name === userName ? 'user' : 'staff');
-        bubble.innerHTML = `<p><strong>${data.sender_name}:</strong></p><p>${data.message}</p>`;
+
+        const messageBox = document.getElementById("chat-box");
+        const bubble = document.createElement("div");
+        bubble.className = "chat-bubble " + (data.sender_type === senderType ? "user" : "staff");
+
+        bubble.innerHTML = `
+            <p><strong>${data.sender_name}:</strong></p>
+            <p>${data.message}</p>
+        `;
+
         if (data.image_url) {
             bubble.innerHTML += `<img src="${data.image_url}" class="message-image">`;
         }
+
         messageBox.appendChild(bubble);
         messageBox.scrollTop = messageBox.scrollHeight;
     };
 
-    function sendMessage() {
-        const messageInput = document.getElementById('message-input');
-        const message = messageInput.value;
-        chatSocket.send(JSON.stringify({
-            'message': message,
-            'sender_name': userName
-        }));
-        messageInput.value = '';
+    // Handle WebSocket-based form submit
+    const form = document.querySelector("form");
+    if (form) {
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
+            const textarea = form.querySelector("textarea[name='message']");
+            const message = textarea.value.trim();
+            if (!message) return;
+
+            console.log("📤 Sending message:", message);
+
+            chatSocket.send(JSON.stringify({
+                'message': message,
+                'sender_name': userName,
+                'sender_type': senderType
+            }));
+
+            textarea.value = '';
+        });
     }
 </script>
+
 
 
 </body>

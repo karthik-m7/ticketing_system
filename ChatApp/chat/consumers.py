@@ -1,7 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
-from .models import Ticket, Message
 
 class TicketConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -12,7 +11,6 @@ class TicketConsumer(AsyncWebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-
         await self.accept()
 
     async def disconnect(self, close_code):
@@ -25,27 +23,31 @@ class TicketConsumer(AsyncWebsocketConsumer):
         data = json.loads(text_data)
         message = data['message']
         sender_name = data['sender_name']
+        sender_type = data['sender_type']
 
-        # 🔽 Save the message to DB
+        # lazy import to avoid AppRegistryNotReady
+        from .models import Ticket, Message
         ticket = await database_sync_to_async(Ticket.objects.get)(id=self.ticket_id)
         await database_sync_to_async(Message.objects.create)(
             ticket=ticket,
             sender_name=sender_name,
+            sender_type=sender_type,
             message=message
         )
 
-        # 🔁 Broadcast to others
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
                 'message': message,
-                'sender_name': sender_name
+                'sender_name': sender_name,
+                'sender_type': sender_type
             }
         )
 
     async def chat_message(self, event):
         await self.send(text_data=json.dumps({
             'message': event['message'],
-            'sender_name': event['sender_name']
+            'sender_name': event['sender_name'],
+            'sender_type': event['sender_type']
         }))
