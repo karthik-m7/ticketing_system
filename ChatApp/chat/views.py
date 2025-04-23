@@ -6,6 +6,15 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import User, Ticket, Staff
 
 
+from django.shortcuts import render
+from django.utils import timezone
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.conf import settings
+from django.contrib import messages
+
+from .models import User, Ticket  # adjust import as needed
+
 def index(request):
     if request.method == "POST":
         name = request.POST.get('name')
@@ -15,15 +24,18 @@ def index(request):
         description = request.POST.get('description')
         image = request.FILES.get('image')
 
+        user_obj = None
+        ticket_obj = None
+
         if name and email and number:
             user_obj, _ = User.objects.get_or_create(
                 name=name,
                 email=email,
                 number=number,
-                defaults={'created_at': timezone.now()}  # Only set created_at if new user
+                defaults={'created_at': timezone.now()}
             )
 
-        if title and description:
+        if user_obj and title and description:
             ticket_obj, _ = Ticket.objects.get_or_create(
                 user=user_obj,
                 title=title,
@@ -32,12 +44,36 @@ def index(request):
                 defaults={'created_at': timezone.now()}
             )
 
-            # Success Message
+
+            # Build ticket detail URL
+            ticket_url = request.build_absolute_uri(reverse('ticket_details', args=[ticket_obj.pk]))
+
+
+            # Send email
+            subject = "🎫 Ticket Created Successfully"
+            message = f"""
+                Hi {user_obj.name},
+                
+                Your ticket has been created successfully.
+                
+                📌 Title: {ticket_obj.title}
+                📝 Description: {ticket_obj.description}
+                
+                You can view your ticket here:
+                {ticket_url}
+                
+                Thanks,
+                Support Team
+                """
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user_obj.email])
+
+            # Success message
             messages.success(request, f"{user_obj.name}, your ticket '{ticket_obj.title}' has been created successfully!")
 
         return render(request, 'index.html', {'user': user_obj, 'ticket': ticket_obj})
 
     return render(request, 'index.html')
+
 
 
 from django.shortcuts import render, get_object_or_404, redirect

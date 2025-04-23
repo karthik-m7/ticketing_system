@@ -173,3 +173,14 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels.layers.InMemoryChannelLayer"
     }
 }
+
+# EMAIL SETTINGS
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_USE_TLS = True
+EMAIL_HOST = "mail.thaagam.email"
+EMAIL_HOST_USER = "office@thaagam.email"
+EMAIL_HOST_PASSWORD = "oG&6pGk_utdE"
+EMAIL_PORT = 587
+EMAIL_USE_SSL = False
+DEFAULT_FROM_EMAIL = "office@thaagam.email"
+
